@@ -1,4 +1,4 @@
-﻿# Extractor de Oferta Académica SIIAU - Web App
+﻿# Visualizador de Oferta Académica SIIAU
 
 Aplicación web desarrollada con Flask para extraer y consultar la oferta académica del sistema SIIAU de la Universidad de Guadalajara.
 
@@ -35,32 +35,6 @@ python app.py
 ```
 
 4. Abre tu navegador en: `http://localhost:5000`
-
-## 🌐 Despliegue en la Nube
-
-### Opción 1: Render.com (Recomendado - Gratis)
-
-1. Crea una cuenta en [Render.com](https://render.com)
-2. Crea un nuevo **Web Service**
-3. Conecta tu repositorio de GitHub
-4. Configuración:
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn app:app`
-5. Agrega `gunicorn` a `requirements.txt`
-
-### Opción 2: Railway.app
-
-1. Crea una cuenta en [Railway.app](https://railway.app)
-2. Crea un nuevo proyecto desde GitHub
-3. Railway detectará automáticamente Flask
-4. Deploy automático
-
-### Opción 3: PythonAnywhere
-
-1. Crea una cuenta en [PythonAnywhere](https://www.pythonanywhere.com)
-2. Sube los archivos o clona desde GitHub
-3. Configura una nueva Web App con Flask
-4. Configura el archivo WSGI
 
 ## 📖 Uso
 
@@ -122,7 +96,7 @@ Avanzadas-UDG/
 
 - Los datos se extraen directamente del sistema SIIAU oficial
 - La aplicación requiere conexión a internet
-- Las cookies de sesión están hardcodeadas y pueden expirar
+- Las cookies de sesión de la Oferta están hardcodeadas y pueden expirar
 - Actualiza las cookies en `app.py` si experimentas problemas de autenticación
 
 ## 📝 Licencia
@@ -135,4 +109,3 @@ Desarrollado por **Moises Ibañez**
 
 ---
 
-Para más información sobre el sistema SIIAU, visita: [SIIAU UDG](https://siiauescolar.siiau.udg.mx)
