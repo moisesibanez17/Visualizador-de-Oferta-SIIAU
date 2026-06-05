@@ -1,111 +1,71 @@
-﻿# Visualizador de Oferta Académica SIIAU
+# Visualizador de Oferta Académica SIIAU
 
-Aplicación web desarrollada con Flask para extraer y consultar la oferta académica del sistema SIIAU de la Universidad de Guadalajara.
+Aplicación web en Flask para consultar la oferta académica del sistema SIIAU de la Universidad de Guadalajara. Scraping, filtrado y visualización de materias, horarios y disponibilidad de cupos.
 
-## 🚀 Características
+## Características
 
-- ✨ Interfaz web moderna con diseño glassmorphism
-- 🔍 Búsqueda avanzada con múltiples filtros
-- 📊 Visualización de resultados en tabla
-- 💾 Exportación a CSV
-- 📱 Diseño responsive (mobile-friendly)
-- 🎨 Animaciones suaves y efectos visuales
+- Búsqueda con filtros: ciclo, centro universitario, carrera, materia, horario, días, edificio/aula
+- Resultados **agrupados por materia** — cada grupo desplegable muestra todas sus secciones
+- Búsqueda instantánea sobre los resultados (filtra por cualquier campo)
+- Badges de disponibilidad: verde (cupos), amarillo (pocos cupos), rojo (lleno)
+- Paginación cliente (20 materias por página)
+- Exportación a Excel (.xlsx)
+- Diseño responsive, funciona en móvil
 
-## 📋 Requisitos
+## Estructura
 
-- Python 3.8 o superior
-- Dependencias listadas en `requirements.txt`
-
-## 🛠️ Instalación Local
-
-1. Clona este repositorio:
-```bash
-git clone https://github.com/tu-usuario/Avanzadas-UDG.git
-cd Avanzadas-UDG
+```
+app.py              — Backend Flask (rutas, scraping, API)
+requirements.txt    — Dependencias Python
+Procfile            — Configuración para Render.com
+runtime.txt         — Python 3.12
+assets/             — Logos de los grupos (GB, GD, GI)
+static/
+  style.css         — Estilos globales
+  results-extra.css — Estilos de resultados y acordeón
+  script.js         — Lógica del formulario de búsqueda
+  ICON.png          — Favicon
+templates/
+  index.html        — Formulario de búsqueda
+  results.html      — Vista de resultados agrupados
 ```
 
-2. Instala las dependencias:
+## Instalación local
+
 ```bash
 pip install -r requirements.txt
-```
-
-3. Ejecuta la aplicación:
-```bash
 python app.py
+# Abrir http://localhost:5000
 ```
 
-4. Abre tu navegador en: `http://localhost:5000`
+## Variables de entorno
 
-## 📖 Uso
+| Variable     | Descripción                        | Default                          |
+|--------------|------------------------------------|----------------------------------|
+| `SECRET_KEY` | Clave secreta para sesiones Flask  | `siiau-extractor-secret-key-2025`|
+| `PORT`       | Puerto del servidor                | `5000`                           |
 
-1. **Selecciona el ciclo escolar** (por defecto: 202520)
-2. **Elige el Centro Universitario** (requerido)
-3. **Aplica filtros opcionales**:
-   - Carrera
-   - Materia
-   - Horario
-   - Días de la semana
-   - Edificio/Aula
-   - Solo disponibles
-4. **Haz clic en "Buscar"**
-5. **Descarga los resultados** en CSV si lo deseas
+## Cookies SIIAU
 
-## 🎯 Filtros Disponibles
+El scraping requiere cookies de sesión activas del sistema SIIAU. Están definidas en el dict `COOKIES` en `app.py`. Si las búsquedas dejan de funcionar, actualiza las cookies con una sesión activa del navegador.
 
-- **Ciclo**: Selecciona el periodo académico
-- **Centro Universitario**: CUCEI, CUCEA, CUCSH, etc.
-- **Carrera**: Código de carrera (ej: INCO, ICOM)
-- **Materia**: Nombre de la materia
-- **Horario**: Rango de horas (formato: 0700-1400)
-- **Días**: Lunes a Sábado
-- **Lugar**: Edificio y aula específicos
-- **Ordenar por**: Materia, Clave o NRC
-- **Mostrar**: 100, 200 o 500 resultados por página
+## Deploy en Render.com
 
-## 🗂️ Estructura del Proyecto
+1. Sube el repositorio a GitHub
+2. En Render → New Web Service → conecta el repo
+3. Render detecta Flask automáticamente; el `Procfile` define el comando de inicio
+4. Agrega la variable de entorno `SECRET_KEY` con un valor seguro
+5. Deploy
 
-```
-Avanzadas-UDG/
-├── app.py                 # Backend Flask
-├── gui.py                 # Aplicación de escritorio (legacy)
-├── templates/
-│   └── index.html        # Frontend HTML
-├── static/
-│   ├── style.css         # Estilos CSS
-│   └── script.js         # Lógica JavaScript
-├── requirements.txt      # Dependencias Python
-└── README.md            # Este archivo
-```
+> El plan gratuito de Render se duerme tras 15 min de inactividad. La primera petición después puede tardar ~30 s en despertar.
 
-## 🔧 Tecnologías Utilizadas
+## Tecnologías
 
-### Backend
-- **Flask**: Framework web
-- **BeautifulSoup4**: Web scraping
-- **Pandas**: Procesamiento de datos
-- **Requests**: HTTP requests
+- **Backend**: Flask, BeautifulSoup4, Pandas, Requests
+- **Frontend**: HTML5, CSS3 (variables, grid, accordion), JavaScript vanilla
+- **Iconos**: Font Awesome 6 · **Fuente**: Poppins (Google Fonts)
+- **Export**: openpyxl
 
-### Frontend
-- **HTML5**: Estructura
-- **CSS3**: Estilos (Glassmorphism, Gradientes)
-- **JavaScript**: Interactividad
-- **Font Awesome**: Iconos
-- **Google Fonts**: Tipografía (Poppins)
+## Autor
 
-## ⚠️ Notas Importantes
-
-- Los datos se extraen directamente del sistema SIIAU oficial
-- La aplicación requiere conexión a internet
-- Las cookies de sesión de la Oferta están hardcodeadas y pueden expirar
-- Actualiza las cookies en `app.py` si experimentas problemas de autenticación
-
-## 📝 Licencia
-
-Este proyecto es de código abierto y está disponible para uso educativo.
-
-## 👤 Autor
-
-Desarrollado por **Moises Ibañez**
-
----
-
+Moises Ibañez — desarrollado para estudiantes de la UDG

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, session, send_from_directory
 from flask_cors import CORS
 from flask_session import Session
 import requests
@@ -8,9 +8,10 @@ from datetime import datetime
 import time
 import re
 import io
+import os
 
 app = Flask(__name__)
-app.secret_key = 'siiau-extractor-secret-key-2025'  # Required for sessions
+app.secret_key = os.environ.get('SECRET_KEY', 'siiau-extractor-secret-key-2025')
 
 # Configure server-side session storage
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -173,82 +174,54 @@ def get_next_p_start(soup):
             return None
     return None
 
-def fetch_all_pages(session, post_url, payload_base, debug_mode=False):
-    """Itera páginas enviando p_start y acumulando resultados hasta que no haya siguiente página."""
+def fetch_all_pages(session, post_url, payload_base):
     results = []
     p_start = 0
-    seen_any = False
     page = 0
-    total_extraido = 0
 
     while True:
         page += 1
+        if page > 1:
+            time.sleep(1.5)
+
         payload = dict(payload_base)
         payload['p_start'] = str(p_start)
 
-        print(f"\n[Página {page}] solicitando p_start={p_start} ...")
-
         try:
             resp = session.post(post_url, data=payload, timeout=30)
-            print(f"Status Code: {resp.status_code}")
 
             if resp.status_code != 200:
-                print(f"Error HTTP en página {page}: {resp.status_code}")
                 break
 
             soup = BeautifulSoup(resp.text, 'html.parser')
 
-            # Buscar mensaje de error o sin resultados
-            error_msg = soup.find('div', class_='error')
-            if error_msg:
-                print(f"Mensaje de error encontrado: {error_msg.text}")
+            if soup.find('div', class_='error'):
                 break
 
-            # Extraer filas
             page_rows = extract_rows_from_table(soup)
-            print(f"  -> filas extraídas esta página: {len(page_rows)}")
 
             if page_rows:
-                seen_any = True
                 results.extend(page_rows)
-                total_extraido += len(page_rows)
-                print(f"  -> Total acumulado: {total_extraido} registros")
             else:
-                if seen_any:
-                    print("  -> no hubo filas en esta página; finalizando paginación.")
-                    break
-                elif page == 1:
-                    print("  -> no se encontraron resultados en la primera página")
-                    break
+                break
 
-            # Buscar botón o form de siguiente página
-            next_p = get_next_p_start(soup)
-            print(f"  -> siguiente p_start sugerido en la página: {next_p}")
-
-            # Buscar botón "100 Próximos" y simular avance si existe
             next_button = soup.find('input', {'value': '100 Próximos'})
             if next_button:
-                print("  -> encontrado botón '100 Próximos', avanzando a la siguiente página")
                 mostrar_val = int(payload_base.get('mostrarp', '100'))
                 p_start += mostrar_val
                 continue
 
-            # Si no hay botón, usar next_p si es válido
+            next_p = get_next_p_start(soup)
             if next_p and next_p > p_start:
                 p_start = next_p
                 continue
 
-            print("  -> no se encontró manera de avanzar página o p_start no avanza; finalizando.")
             break
-
-            # Pausa entre peticiones
-            time.sleep(1.5)
 
         except Exception as e:
             print(f"Error en página {page}: {str(e)}")
             break
 
-    print(f"\nExtracción completada: {total_extraido} registros en {page} páginas")
     return results
 
 @app.route('/')
@@ -257,17 +230,12 @@ def index():
 
 @app.route('/results')
 def results():
-    """Show search results page"""
-    from flask import session
     results_data = session.get('search_results', [])
     results_count = session.get('search_count', 0)
     return render_template('results.html', data=results_data, count=results_count)
 
 @app.route('/assets/<path:filename>')
 def serve_assets(filename):
-    """Serve files from assets folder"""
-    from flask import send_from_directory
-    import os
     assets_dir = os.path.join(app.root_path, 'assets')
     return send_from_directory(assets_dir, filename)
 
@@ -275,7 +243,6 @@ def serve_assets(filename):
 def search():
     try:
         data = request.json
-        print(f"Datos recibidos: {data}")
 
         # Obtener código del centro
         centro_seleccionado = data.get('centro', '')
@@ -308,13 +275,11 @@ def search():
             "dispp": "1" if data.get('solo_disponibles', False) else "",
         }
 
-        print(f"Payload enviado a SIIAU: {payload}")
-
         # Realizar scraping
         with requests.Session() as s:
             s.headers.update(HEADERS)
             s.cookies.update(COOKIES)
-            all_data = fetch_all_pages(s, POST_URL, payload, debug_mode=False)
+            all_data = fetch_all_pages(s, POST_URL, payload)
 
         if all_data:
             df = pd.DataFrame(all_data)
@@ -336,8 +301,6 @@ def search():
                 }
                 
                 dias_buscados = [dia_map.get(dia, dia[0]) for dia in dias_seleccionados]
-                print(f"Filtrando por días: {dias_seleccionados} → {dias_buscados}")
-                print(f"Registros antes del filtro: {len(df)}")
                 
                 def cumple_dias(fila):
                     dias_fila = fila.get('Dias', '')
@@ -348,30 +311,16 @@ def search():
                     return True
                 
                 df = df[df.apply(cumple_dias, axis=1)]
-                print(f"Registros después del filtro: {len(df)}")
             
-            # Guardar en sesión y redirigir
-            from flask import session
             session['search_results'] = df.to_dict('records')
             session['search_count'] = len(df)
-            
-            return jsonify({
-                'success': True,
-                'redirect': '/results'
-            })
+            return jsonify({'success': True, 'redirect': '/results'})
         else:
-            from flask import session
             session['search_results'] = []
             session['search_count'] = 0
-            return jsonify({
-                'success': True,
-                'redirect': '/results'
-            })
+            return jsonify({'success': True, 'redirect': '/results'})
 
     except Exception as e:
-        print(f"Error en búsqueda: {str(e)}")
-        import traceback
-        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/download-excel', methods=['POST'])
@@ -402,10 +351,8 @@ def download_excel():
         )
     
     except Exception as e:
-        print(f"Error en descarga: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    import os
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=False, host='0.0.0.0', port=port)

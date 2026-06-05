@@ -40,5 +40,12 @@ Thumbs.db
 # Debug files
 debug_page_*.html
 
-# CSV outputs
+# Outputs
 oferta_*.csv
+oferta_*.xlsx
+
+# Flask session files
+flask_session/
+
+# Superpowers brainstorm sessions
+.superpowers/
